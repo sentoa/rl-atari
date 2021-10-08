@@ -1,7 +1,7 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-from baselines.common.atari_wrappers import make_atari, wrap_deepmind
+import atari_wrappers, wrappers
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
