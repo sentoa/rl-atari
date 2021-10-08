@@ -81,11 +81,11 @@ def create_q_model():
 
 
 # Initialize action-value function with random weights
-model = keras.models.load_model('E:\\GithubEDrive\\sw9\\models')
-#model = create_q_model()
+#model = keras.models.load_model('E:\\GithubEDrive\\sw9\\models')
+model = create_q_model()
 # Initialize target action-value function with random weights
-model_target = keras.models.load_model('E:\\GithubEDrive\\sw9\\models')
-#model_target = create_q_model()
+#model_target = keras.models.load_model('E:\\GithubEDrive\\sw9\\models')
+model_target = create_q_model()
 
 # Initialize Replay Memory
 action_history = []
@@ -100,7 +100,7 @@ while True:
     episode_reward = 0
 
     for timestep in range(1, max_steps_per_episode):
-        env.render(); 
+        #env.render(); 
         #time.sleep(.01)
         frame_count += 1
         
@@ -117,7 +117,7 @@ while True:
             action = tf.argmax(action_probs[0]).numpy()
 
         # Decay probability of taking random action
-        -= epsilon_interval / epsilon_greedy_frames
+        epsilon -= epsilon_interval / epsilon_greedy_frames
         epsilon = max(epsilon, epsilon_min)
 
         # Execute action in emulator and observe reward and next state 
@@ -227,7 +227,7 @@ while True:
 
     if(episode_count % 1000 == 0):
         print("saved model at episode " + str(episode_count)) 
-        #model.save('E:\\GithubEDrive\\sw9\\models')
+        model.save('models')
         
     if recent_episodes_mean_reward > 40:  # Condition to consider the task solved
         print("Solved at episode {}!".format(episode_count))
