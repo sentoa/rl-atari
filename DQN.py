@@ -8,6 +8,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+tf.autograph.set_verbosity(0)
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -222,8 +223,7 @@ for episode in range(episodes):
 
     episode_count += 1
 
-    if(episode_count % 10 == 0):
+    if(episode_count % 100 == 0):
         print("Saved model at episode " + str(episode_count)) 
         model.save('models')
-        
-
+    
