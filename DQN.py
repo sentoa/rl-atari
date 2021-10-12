@@ -253,8 +253,8 @@ for episode in range(episodes):
         model.save(model_path)
 
         # Save the parameters
-        temp = '{ "running_reward":"{}", "episode":"{}", "frame_count":"{}" }'
-        data = temp.format(running_reward, episode_count, frame_count)
+        data = { "running_reward": running_reward, "episode" : episode_count,
+                 "frame_count" : frame_count}
         param_file = json.loads(data)
         filename='{}/data.json'.format(model_path)
         with open(filename,'w+') as file:
