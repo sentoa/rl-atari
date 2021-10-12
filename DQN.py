@@ -236,7 +236,7 @@ for episode in range(episodes):
     running_reward = np.mean(episode_reward_history)
 
     # We log every episode 
-    logger.logkv("reward", episode_reward)
+    logger.logkv("reward", running_reward)
     logger.logkv("episode", episode_count)
     logger.logkv("frame_count", frame_count)
     logger.dumpkvs()
