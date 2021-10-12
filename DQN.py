@@ -11,8 +11,20 @@ from tensorflow.keras import layers
 import logger
 import os
 import shutil
+import argparse
 
 tf.autograph.set_verbosity(0)
+
+ 
+# Initialize parser
+parser = argparse.ArgumentParser()
+ 
+# Adding optional argument
+parser.add_argument('--inference', dest='inference', action='store_true', help='Runs model in inference mode')
+parser.set_defaults(feature=False)
+ 
+# Read arguments from command line
+args = parser.parse_args()
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -52,15 +64,17 @@ env = make_atari("BreakoutNoFrameskip-v4")
 env = wrap_deepmind(env, frame_stack=True, scale=True)
 env.seed(seed)
 
-# The first model makes the predictions for Q-values which are used to
-# make a action.
-model = create_q_model(env.action_space.n)
-#model =  keras.models.load_model('models')
-# Build a target model for the prediction of future rewards.
-# The weights of a target model get updated every 10000 steps thus when the
-# loss between the Q-values is calculated the target Q-value is stable.
-model_target = create_q_model(env.action_space.n)
-#model_target = keras.models.load_model('models')
+
+# Initialize Q-network and target network with random weights
+# The Q-network makes the predictions which are used to take an action.
+if args.inference:
+    model =  keras.models.load_model('models')
+    model_target = keras.models.load_model('models')
+else:
+    model = create_q_model(env.action_space.n)
+    model_target = create_q_model(env.action_space.n)
+
+
 
 """# Configuration"""
 
@@ -83,7 +97,10 @@ episode_count = 0
 frame_count = 0
 
 # Number of frames to take random action and observe output
-epsilon_frame_cap = 1000
+if args.inference:
+    epsilon_frame_cap = 0
+else:
+    epsilon_frame_cap = 1000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
@@ -132,11 +149,12 @@ for episode in range(episodes):
         # Take best action
         action = tf.argmax(action_probs[0]).numpy()
 
-        # Decay probability of taking random action
-        epsilon -= epsilon / epsilon_factor
-        # If enough timesteps have been reached, we do not want epsilon
-        # to reach 0, so we ensure there is a minimum threshold
-        epsilon = max(epsilon, epsilon_min)
+        if not args.inference:
+            # Decay probability of taking random action
+            epsilon -= epsilon / epsilon_factor
+            # If enough timesteps have been reached, we do not want epsilon
+            # to reach 0, so we ensure there is a minimum threshold
+            epsilon = max(epsilon, epsilon_min)
 
         # Apply the sampled action in our environment
         state_next, reward, done, _ = env.step(action)
@@ -228,7 +246,6 @@ for episode in range(episodes):
         if done:
             break
 
-
     # Update running reward to check condition for solving
     episode_reward_history.append(episode_reward)
     if len(episode_reward_history) > 100:
@@ -243,7 +260,7 @@ for episode in range(episodes):
 
     episode_count += 1
 
-    if(episode_count % 100 == 0):
+    if(episode_count % 100 == 0 and not args.inference):
         print("Saved model at episode " + str(episode_count)) 
         model.save('models/episode-{}'.format(episode_count))
     
