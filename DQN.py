@@ -8,6 +8,10 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+import logger
+import os
+import shutil
+
 tf.autograph.set_verbosity(0)
 
 # Configuration paramaters for the whole setup
@@ -17,6 +21,8 @@ epsilon = 0.9  # Epsilon greedy parameter
 epsilon_min = 0.1  # Minimum epsilon greedy parameter
 batch_size = 32  # Size of batch taken from replay buffer
 max_steps_per_episode = 10000
+
+DEBUG = 10
 
 """# Q Model"""
 
@@ -94,6 +100,13 @@ epsilon_factor = 10000000
 
 # Using huber loss for stability
 loss_function = keras.losses.Huber()
+
+# Setup logging for the model
+logger.set_level(DEBUG)
+dir = "logs"
+if os.path.exists(dir):
+    shutil.rmtree(dir)
+logger.configure(dir=dir)
 
 for episode in range(episodes):
     state = np.array(env.reset())
@@ -211,6 +224,12 @@ for episode in range(episodes):
             del state_next_history[:1]
             del action_history[:1]
             del done_history[:1]
+
+        #
+        logger.logkv("reward", running_reward)
+        logger.logkv("episode", episode_count)
+        logger.logkv("frame_count", frame_count)
+        logger.dumpkvs()
 
         if done:
             break
