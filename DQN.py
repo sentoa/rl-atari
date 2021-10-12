@@ -225,14 +225,9 @@ for episode in range(episodes):
             del action_history[:1]
             del done_history[:1]
 
-        #
-        logger.logkv("reward", running_reward)
-        logger.logkv("episode", episode_count)
-        logger.logkv("frame_count", frame_count)
-        logger.dumpkvs()
-
         if done:
             break
+
 
     # Update running reward to check condition for solving
     episode_reward_history.append(episode_reward)
@@ -240,9 +235,15 @@ for episode in range(episodes):
         del episode_reward_history[:1]
     running_reward = np.mean(episode_reward_history)
 
+    # We log every episode 
+    logger.logkv("reward", running_reward)
+    logger.logkv("episode", episode_count)
+    logger.logkv("frame_count", frame_count)
+    logger.dumpkvs()
+
     episode_count += 1
 
     if(episode_count % 100 == 0):
         print("Saved model at episode " + str(episode_count)) 
-        model.save('models')
+        model.save('models/episode-{}'.format(episode_count))
     
