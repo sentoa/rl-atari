@@ -255,6 +255,7 @@ for episode in range(episodes):
         # Save the parameters
         data = { "running_reward": running_reward, "episode" : episode_count,
                  "frame_count" : frame_count}
+        data = json.dumps(data)    
         param_file = json.loads(data)
         filename='{}/data.json'.format(model_path)
         with open(filename,'w+') as file:
