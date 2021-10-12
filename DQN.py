@@ -11,6 +11,7 @@ from tensorflow.keras import layers
 import logger
 import os
 import shutil
+import json
 
 tf.autograph.set_verbosity(0)
 
@@ -235,7 +236,7 @@ for episode in range(episodes):
         del episode_reward_history[:1]
     running_reward = np.mean(episode_reward_history)
 
-    # We log every episode 
+    # Log every episode 
     logger.logkv("reward", running_reward)
     logger.logkv("episode", episode_count)
     logger.logkv("frame_count", frame_count)
@@ -243,7 +244,18 @@ for episode in range(episodes):
 
     episode_count += 1
 
+    # Save Model every 100th episode
     if(episode_count % 100 == 0):
-        print("Saved model at episode " + str(episode_count)) 
-        model.save('models/episode-{}'.format(episode_count))
-    
+        print("Saved model at episode {}".format(episode_count))
+        model_path = 'models/episode-{}'.format(episode_count)
+
+        # Save tensorflow model
+        model.save(model_path)
+
+        # Save the parameters
+        temp = '{ "running_reward":"{}", "episode":"{}", "frame_count":"{}" }'
+        data = temp.format(running_reward, episode_count, frame_count)
+        param_file = json.loads(data)
+        filename='{}/data.json'.format(model_path)
+        with open(filename,'w+') as file:
+            json.dump(param_file, file, indent = 4)
