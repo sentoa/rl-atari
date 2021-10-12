@@ -11,7 +11,7 @@ import time
 start_time = time.time()
 
 #max_memory_length = 150
-max_memory_length = 100000 # should be 1000000 to be similar to deepmind, check if can run without memory issues
+max_memory_length = 50000 # should be 1000000 to be similar to deepmind, check if can run without memory issues
 batch_size = 32
 gamma = 0.99
 frame_count = 0
