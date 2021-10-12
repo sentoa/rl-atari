@@ -244,5 +244,5 @@ for episode in range(episodes):
 
     if(episode_count % 100 == 0):
         print("Saved model at episode " + str(episode_count)) 
-        model.save('models')
+        model.save('models/models-episode-{}'.format(episode_count))
     
