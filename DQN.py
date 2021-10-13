@@ -229,14 +229,6 @@ for episode in range(episodes):
             # update the the target network with new weights
             model_target.set_weights(model.get_weights())
 
-            # Checkpoint Model  
-            #checkpoint_path = "Weights\\cp-ep-{}-reward-{}.ckpt".format(episode, running_reward)
-            #checkpoint_path = "checkpoints/cp-ep-{}-reward-{}.ckpt".format(episode, running_reward)
-            #model_target.save_weights(checkpoint_path)
-            # Log details
-            template = "running reward: {:.2f} at episode {}, frame count {}"
-            print(template.format(running_reward, episode_count, frame_count))
-
         # Limit the state and reward history
         if len(rewards_history) > max_memory_length:
             del rewards_history[:1]
