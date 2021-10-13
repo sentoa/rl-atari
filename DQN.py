@@ -139,17 +139,16 @@ for episode in range(episodes):
         # In the first X frames, epsilon_frame_cap will always take random action,
         # since we do not have any Q values yet.
         # Otherwise, we use the random distribution from epsilon-greedy.
-    #    if frame_count < epsilon_frame_cap or epsilon > np.random.rand(1)[0]:
-     #       # Take random action
-     #       action = np.random.choice(env.action_space.n)
-     #   else:
-        # Predict action Q-values
-        # From environment state
-        state_tensor = tf.convert_to_tensor(state)
-        state_tensor = tf.expand_dims(state_tensor, 0)
-        action_probs = model(state_tensor, training=False)
-        # Take best action
-        action = tf.argmax(action_probs[0]).numpy()
+        if frame_count < epsilon_frame_cap or epsilon > np.random.rand(1)[0]:
+            # Take random action
+            action = np.random.choice(env.action_space.n)
+        else:
+        # Predict action Q-values From environment state
+            state_tensor = tf.convert_to_tensor(state)
+            state_tensor = tf.expand_dims(state_tensor, 0)
+            action_probs = model(state_tensor, training=False)
+            # Take best action
+            action = tf.argmax(action_probs[0]).numpy()
 
         if not args.inference:
             # Decay probability of taking random action
