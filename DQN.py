@@ -7,6 +7,7 @@ from atari_wrappers import make_atari, wrap_deepmind
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+import matplotlib.pyplot as plt
 
 import logger
 import os
@@ -56,9 +57,40 @@ def create_q_model(num_actions):
 
     return keras.Model(inputs=inputs, outputs=action)
 
-"""# Setup Environment and Instanciate Q Models
+"""# Generator Model """
 
-"""
+def make_generator_model():
+    model = tf.keras.Sequential()
+
+    model.add(layers.Dense(21*21*128, use_bias=False, input_shape=(100,)))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+    model.add(layers.Reshape((21, 21, 128)))
+    model.add(layers.Conv2DTranspose(64, (5, 5), strides=(2, 2), padding='same', use_bias=False))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+    model.add(layers.Conv2DTranspose(4, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
+
+    return model
+
+
+def random_generate_batch():
+    model = make_generator_model()
+
+    noise = tf.random.normal([1, 100])
+    generated_state = model(noise, training=False)
+    return tf.squeeze(generated_state)
+    """ #FOR VISUALIZATION
+    state = np.array(generated_image)
+    plt.rcParams["figure.figsize"] = [7.00, 3.50]
+    plt.rcParams["figure.autolayout"] = True
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    data = np.random.random(size=(3, 3, 3))
+    z, x, y = state.nonzero()
+    ax.scatter(x, y, z, c=z, alpha=1)
+    plt.show()"""
+"""# Setup Environment and Instanciate Q Models"""
 
 # Use the Baseline Atari environment because of Deepmind helper functions
 env = make_atari("BreakoutNoFrameskip-v4")
@@ -143,7 +175,7 @@ for episode in range(episodes):
             # Take random action
             action = np.random.choice(env.action_space.n)
         else:
-        # Predict action Q-values From environment state
+            # Predict action Q-values From environment state
             state_tensor = tf.convert_to_tensor(state)
             state_tensor = tf.expand_dims(state_tensor, 0)
             action_probs = model(state_tensor, training=False)
