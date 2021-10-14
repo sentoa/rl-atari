@@ -16,19 +16,9 @@ import json
 import argparse
 import math
 
-print(tf.executing_eagerly())
-tf.config.run_functions_eagerly(True)
+#print(tf.executing_eagerly())
+#tf.config.run_functions_eagerly(True)
 tf.autograph.set_verbosity(0)
- 
-# Initialize parser
-parser = argparse.ArgumentParser()
- 
-# Adding optional argument
-parser.add_argument('--inference', dest='inference', action='store_true', help='Runs model in inference mode')
-parser.set_defaults(feature=False)
- 
-# Read arguments from command line
-args = parser.parse_args()
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -122,16 +112,12 @@ env.seed(seed)
 
 # Initialize Q-network and target network with random weights
 # The Q-network makes the predictions which are used to take an action.
-if args.inference:
-    model =  keras.models.load_model('models')
-    model_target = keras.models.load_model('models')
-else:
-    model = create_q_model(env.action_space.n)
-    model_target = create_q_model(env.action_space.n)
+model = create_q_model(env.action_space.n)
+model_target = create_q_model(env.action_space.n)
 
 
 # Initialize Descriminator and Generator Models
-model = make_generator_model()
+generator_model = make_generator_model()
 discriminator = make_discriminator_model()
 
 
@@ -171,7 +157,7 @@ def train_step(real_image, reward_list):
 
     with tf.GradientTape() as disc_tape:
       
-        generated_images = model(noise, training=False)
+        generated_images = generator_model(noise, training=False)
 
         real_output = discriminator(real_image, training=True)
         fake_output = discriminator(generated_images, training=True)
@@ -197,10 +183,8 @@ episode_count = 0
 frame_count = 0
 
 # Number of frames to take random action and observe output
-if args.inference:
-    epsilon_frame_cap = 0
-else:
-    epsilon_frame_cap = 1000
+
+epsilon_frame_cap = 1000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
@@ -230,7 +214,7 @@ for episode in range(episodes):
     episode_reward = 0
 
     for timestep in range(1, max_steps_per_episode):
-        env.render(); 
+        #env.render(); 
         frame_count += 1
 
         # Use epsilon-greedy for exploration
@@ -248,12 +232,12 @@ for episode in range(episodes):
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
 
-        if not args.inference:
-            # Decay probability of taking random action
-            epsilon -= epsilon / epsilon_factor
-            # If enough timesteps have been reached, we do not want epsilon
-            # to reach 0, so we ensure there is a minimum threshold
-            epsilon = max(epsilon, epsilon_min)
+        # Decay probability of taking random action
+        epsilon -= epsilon / epsilon_factor
+        # If enough timesteps have been reached, we do not want epsilon
+        # to reach 0, so we ensure there is a minimum threshold
+        epsilon = max(epsilon, epsilon_min)
+
 
         # Apply the sampled action in our environment
         state_next, reward, done, _ = env.step(action)
@@ -357,7 +341,7 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 100 == 0):
+    if(episode_count % 10 == 0):
         print("Saved model at episode {}".format(episode_count))
         model_path = 'models/episode-{}'.format(episode_count)
 
@@ -371,7 +355,6 @@ for episode in range(episodes):
                                         discriminator=discriminator)
         checkpoint.save(file_prefix = checkpoint_prefix)
 
-        
         # Save the parameters
         data = { "running_reward": running_reward, "episode" : episode_count,
                  "frame_count" : frame_count}
