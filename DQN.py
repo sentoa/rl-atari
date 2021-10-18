@@ -85,7 +85,7 @@ else:
 optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
 
 # Number of episodes
-episodes = 100000
+episodes = 200
 
 # Experience replay buffers
 action_history = []
