@@ -4,11 +4,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import gym
 import numpy as np
 import tensorflow as tf
+import shutil
+import logger
+import json
 from tensorflow import keras
 from tensorflow.keras import layers
-from baselines.common.atari_wrappers import make_atari, wrap_deepmind
-
-#from atari_wrappers import make_atari, wrap_deepmind
+from atari_wrappers import make_atari, wrap_deepmind
 
 combined_loss = False
 
@@ -16,6 +17,8 @@ combined_loss = False
 seed = 2
 gamma = 0.99  # Discount factor for past rewards
 max_steps_per_episode = 10000
+
+DEBUG = 10
 
 env = make_atari("BreakoutNoFrameskip-v4")
 eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
@@ -58,9 +61,7 @@ def create_critic_model():
     return keras.Model(inputs=inputs, outputs=value)
 
 actor_model = create_actor_model()
-actor_model.summary()
 critic_model = create_critic_model()
-critic_model.summary()
 
 optimizer = keras.optimizers.Adam(learning_rate=0.01)
 huber_loss = keras.losses.Huber()
@@ -70,13 +71,21 @@ rewards_history = []
 running_reward = 0
 episode_count = 0
 
+# Setup logging for the model
+logger.set_level(DEBUG)
+dir = "logs"
+if os.path.exists(dir):
+    shutil.rmtree(dir)
+logger.configure(dir=dir)
+
+
 while True:  # Run until solved
     state = np.array(env.reset())
 
     episode_reward = 0
     with tf.GradientTape(persistent=True) as tape:
         for timestep in range(1, max_steps_per_episode):
-            env.render()
+            #env.render()
             # of the agent in a pop up window.
 
             # state - EagerTensor with shape (1, 4)
@@ -170,12 +179,34 @@ while True:  # Run until solved
         critic_value_history.clear()
         rewards_history.clear()
 
-    # Log details
-    episode_count += 1
     if episode_count % 10 == 0:
-        template = "running reward: {:.2f} at episode {}"
-        print(template.format(running_reward, episode_count))
+        # Log every episode 
+        logger.logkv("reward", running_reward)
+        logger.logkv("episode", episode_count)
+        logger.dumpkvs()
 
-    if running_reward > 195:  # Condition to consider the task solved
-        print("Solved at episode {}!".format(episode_count))
-        break
+    # Put it here to avoid saving on 0th episode lol
+    episode_count += 1
+
+    # Save Model every 100th episode
+    if(episode_count % 100 == 0):
+        print("Saved model at episode {}".format(episode_count))
+        actor_model_path = 'models/actor-episode-{}'.format(episode_count)
+        critic_model_path = 'models/critic-episode-{}'.format(episode_count)
+        # Save tensorflow model
+        actor_model.save(actor_model_path)
+        critic_model.save(critic_model_path)
+
+        # Save the parameters
+        data = { "running_reward": running_reward, "episode" : episode_count}
+        data = json.dumps(data)    
+        param_file = json.loads(data)
+
+        actor_file ='{}/data.json'.format(actor_model_path)
+        with open(actor_file,'w+') as file:
+            json.dump(param_file, file, indent = 4)
+        
+        critic_file ='{}/data.json'.format(critic_model_path)
+        with open(critic_file,'w+') as file:
+            json.dump(param_file, file, indent = 4)
+
