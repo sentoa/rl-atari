@@ -6,37 +6,61 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from baselines.common.atari_wrappers import make_atari, wrap_deepmind
+
 #from atari_wrappers import make_atari, wrap_deepmind
 
-combined_loss = True
+combined_loss = False
 
 # Configuration parameters for the whole setup
-seed = 42
+seed = 2
 gamma = 0.99  # Discount factor for past rewards
 max_steps_per_episode = 10000
-#env = gym.make("Breakout-v0")  # Create the environment
-env = gym.make("CartPole-v0")  # Create the environment
-env.seed(seed)
-eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
 
-num_inputs = 4
-num_actions = 2
-num_hidden = 128
+env = make_atari("BreakoutNoFrameskip-v4")
+eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
+# preprocesses sequence, warp the frames, grey scale, stake four frame and scale to smaller ratio
+env = wrap_deepmind(env, frame_stack=True, scale=True)
+seed = 2
+env.seed(seed)
+
+num_actions = env.action_space.n 
+print("Numb of actions " + str(num_actions))
 
 def create_actor_model():
-  inputs = layers.Input(shape=(num_inputs, ))
-  model = layers.Dense(num_hidden, activation="relu")(inputs)
-  model = layers.Dense(num_actions, activation="softmax")(model)
-  return keras.Model(inputs=inputs, outputs=model)
+    inputs = layers.Input(shape=(84, 84, 4,))
+
+    # Convolutions on the frames on the screen
+    model = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
+    model = layers.Conv2D(64, 4, strides=2, activation="relu")(model)
+    model = layers.Conv2D(64, 3, strides=1, activation="relu")(model)
+
+    model = layers.Flatten()(model)
+
+    model = layers.Dense(512, activation="relu")(model)
+    action = layers.Dense(num_actions, activation="softmax")(model)
+
+    return keras.Model(inputs=inputs, outputs=action)
 
 def create_critic_model():
-  inputs = layers.Input(shape=(num_inputs, ))
-  model = layers.Dense(num_hidden, activation="relu")(inputs)
-  model = layers.Dense(1)(model)
-  return keras.Model(inputs=inputs, outputs=model)
+    inputs = layers.Input(shape=(84, 84, 4,))
+
+    # Convolutions on the frames on the screen
+    model = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
+    model = layers.Conv2D(64, 4, strides=2, activation="relu")(model)
+    model = layers.Conv2D(64, 3, strides=1, activation="relu")(model)
+
+    model = layers.Flatten()(model)
+
+    model = layers.Dense(512, activation="relu")(model) # maybe unecssary 512 dense units layer
+    value = layers.Dense(1, activation="linear")(model)
+
+    return keras.Model(inputs=inputs, outputs=value)
 
 actor_model = create_actor_model()
+actor_model.summary()
 critic_model = create_critic_model()
+critic_model.summary()
 
 optimizer = keras.optimizers.Adam(learning_rate=0.01)
 huber_loss = keras.losses.Huber()
@@ -47,7 +71,8 @@ running_reward = 0
 episode_count = 0
 
 while True:  # Run until solved
-    state = env.reset()
+    state = np.array(env.reset())
+
     episode_reward = 0
     with tf.GradientTape(persistent=True) as tape:
         for timestep in range(1, max_steps_per_episode):
@@ -68,6 +93,7 @@ while True:  # Run until solved
             critic_value_history.append(critic_value[0, 0])
 
             # Sample action from action probability distribution
+            # squeeze can transform tensor to np array
             action = np.random.choice(num_actions, p=np.squeeze(action_probs))
             action_probs_history.append(tf.math.log(action_probs[0, action]))
 
@@ -116,6 +142,7 @@ while True:  # Run until solved
                 huber_loss(tf.expand_dims(value, 0), tf.expand_dims(ret, 0))
             )
 
+        # ----------------------------------------------- #
         if combined_loss:
             # LOSS FOR BOTH COMBINED
             # Backpropagation
