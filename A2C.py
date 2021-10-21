@@ -14,7 +14,6 @@ from atari_wrappers import make_atari, wrap_deepmind
 combined_loss = False
 
 # Configuration parameters for the whole setup
-seed = 2
 gamma = 0.99  # Discount factor for past rewards
 max_steps_per_episode = 10000
 
@@ -81,7 +80,11 @@ logger.configure(dir=dir)
 
 while True:  # Run until solved
     state = np.array(env.reset())
-
+    '''
+    # Behaviour Policy
+    action_probs = actor_model(state, training=False)
+    action = np.random.choice(num_actions, p=np.squeeze(action_probs))
+    '''
     episode_reward = 0
     with tf.GradientTape(persistent=True) as tape:
         for timestep in range(1, max_steps_per_episode):
@@ -104,6 +107,7 @@ while True:  # Run until solved
             # Sample action from action probability distribution
             # squeeze can transform tensor to np array
             action = np.random.choice(num_actions, p=np.squeeze(action_probs))
+            # Appends/ saves natural log of his action probability, ex ln(0.26182014) = -1.3466
             action_probs_history.append(tf.math.log(action_probs[0, action]))
 
             # Apply the sampled action in our environment
@@ -115,7 +119,8 @@ while True:  # Run until solved
                 break
 
         # Update running reward to check condition for solving
-        running_reward = 0.05 * episode_reward + (1 - 0.05) * running_reward
+        # 5% weight from newest episode + 95% of reward from older episodes, when "average" running reward is high enough, stop  
+        running_reward = 0.05 * episode_reward + (1 - 0.05) * running_reward 
 
         # Calculate expected value from rewards
         # - At each timestep what was the total reward received after that timestep
@@ -142,11 +147,13 @@ while True:  # Run until solved
             # of `log_prob` and ended up recieving a total reward = `ret`.
             # The actor must be updated so that it predicts an action that leads to
             # high rewards (compared to critic's estimate) with high probability.
-            diff = ret - value
-            actor_losses.append(-log_prob * diff)  # actor loss
+            # advantage, with discounted return we got from one action, and the value our critic expected from that state 
+            advantage = ret - value 
+            actor_losses.append(-log_prob * advantage)  # actor loss according to loss formular https://imgur.com/a/G7zbUtV
 
             # The critic must be updated so that it predicts a better estimate of
-            # the future rewards.
+            # the future rewards. Compares its value prediction vs the actual recieved discounted reward.
+            # Critic loss function https://imgur.com/a/pRc5VLF.
             critic_losses.append(
                 huber_loss(tf.expand_dims(value, 0), tf.expand_dims(ret, 0))
             )
