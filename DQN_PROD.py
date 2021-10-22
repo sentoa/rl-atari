@@ -238,7 +238,7 @@ for episode in range(episodes):
     # Save Model every 100th episode
     if(episode_count % 10 == 0):
         print("Saved model at episode {}".format(episode_count))
-        model_path = 'models'
+        model_path = 'models/model'
 
         # Save tensorflow model
         model.save(model_path)
