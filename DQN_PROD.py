@@ -105,7 +105,7 @@ loss_function = keras.losses.Huber()
 
 # Setup logging for the model
 logger.set_level(DEBUG)
-dir = "logs"
+dir = "models"
 if os.path.exists(dir):
     shutil.rmtree(dir)
 logger.configure(dir=dir)
