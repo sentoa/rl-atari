@@ -58,12 +58,8 @@ env.seed(seed)
 
 # Initialize Q-network and target network with random weights
 # The Q-network makes the predictions which are used to take an action.
-if args.inference:
-    model =  keras.models.load_model('models')
-    model_target = keras.models.load_model('models')
-else:
-    model = create_q_model(env.action_space.n)
-    model_target = create_q_model(env.action_space.n)
+model = create_q_model(env.action_space.n)
+model_target = create_q_model(env.action_space.n)
 
 
 
