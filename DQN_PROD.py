@@ -115,7 +115,7 @@ for episode in range(episodes):
     episode_reward = 0
 
     for timestep in range(1, max_steps_per_episode):
-        env.render(); 
+        #env.render(); 
         frame_count += 1
 
         # Use epsilon-greedy for exploration
