@@ -10,11 +10,10 @@ import json
 from tensorflow import keras
 from tensorflow.keras import layers
 from atari_wrappers import make_atari, wrap_deepmind
-
-combined_loss = True
+from pathlib import Path
 
 # Configuration parameters for the whole setup
-gamma = 0.99  # Discount factor for past rewards
+discount_factor = 0.99  
 max_steps_per_episode = 1000
 
 DEBUG = 10
@@ -29,9 +28,8 @@ env.seed(seed)
 num_actions = env.action_space.n 
 print("Numb of actions " + str(num_actions))
 
-def create_actor_model():
+def create_A2C_model():
     inputs = layers.Input(shape=(84, 84, 4,))
-
     # Convolutions on the frames on the screen
     model = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
     model = layers.Conv2D(64, 4, strides=2, activation="relu")(model)
@@ -40,27 +38,13 @@ def create_actor_model():
     model = layers.Flatten()(model)
 
     model = layers.Dense(512, activation="relu")(model)
+
     action = layers.Dense(num_actions, activation="softmax")(model)
+    critic = layers.Dense(1, activation="linear")(model)
 
-    return keras.Model(inputs=inputs, outputs=action)
+    return keras.Model(inputs=inputs, outputs=[action, critic])
 
-def create_critic_model():
-    inputs = layers.Input(shape=(84, 84, 4,))
-
-    # Convolutions on the frames on the screen
-    model = layers.Conv2D(32, 8, strides=4, activation="relu")(inputs)
-    model = layers.Conv2D(64, 4, strides=2, activation="relu")(model)
-    model = layers.Conv2D(64, 3, strides=1, activation="relu")(model)
-
-    model = layers.Flatten()(model)
-
-    model = layers.Dense(512, activation="relu")(model) # maybe unecssary 512 dense units layer
-    value = layers.Dense(1, activation="linear")(model)
-
-    return keras.Model(inputs=inputs, outputs=value)
-
-actor_model = create_actor_model()
-critic_model = create_critic_model()
+A2C_model = create_A2C_model()
 
 optimizer = keras.optimizers.Adam(learning_rate=0.01)
 huber_loss = keras.losses.Huber()
@@ -86,7 +70,7 @@ done_history = []
 episodes_history = []
 episodes_history_max_length = 100
 
-min_episodes_memory = 3
+min_episodes_memory = 1
 
 while True:  # Run until solved
     state = np.array(env.reset())
@@ -97,7 +81,8 @@ while True:  # Run until solved
         # Behaviour Policy, follow current policy
         state = tf.convert_to_tensor(state)
         state = tf.expand_dims(state, 0)
-        action_probs = actor_model(state, training=False)
+        action_probs, critic_value = A2C_model(state)
+
         action = np.random.choice(num_actions, p=np.squeeze(action_probs))
         state, reward, done, _ = env.step(action)
         
@@ -106,7 +91,7 @@ while True:  # Run until solved
         exp_reward_history.append(reward)
         done_history.append(done)
         behaviour_episode_reward += reward
-        if(done):
+        if(timestep == 1000):
             break
     
     behaviour_running_reward = 0.05 * behaviour_episode_reward + (1 - 0.05) * behaviour_running_reward 
@@ -128,7 +113,7 @@ while True:  # Run until solved
         indice = np.random.choice(range(replay_length), size=1)[0]
         # episodes_history[indice][0] indices: episode history, states, number of states for that episode
         replay_episode_length = len(episodes_history[indice][0])
-        with tf.GradientTape(persistent=True) as tape:
+        with tf.GradientTape() as tape:
             episode_reward = 0
             for experience_time_step in range(replay_episode_length):
                 # still needs to only update gradient every 4th frame for effeciency
@@ -143,8 +128,7 @@ while True:  # Run until solved
                 state = tf.convert_to_tensor(state)
                 state = tf.expand_dims(state, 0)
                 
-                action_probs = actor_model(state, training=False)
-                critic_value = critic_model(state, training=False)
+                action_probs, critic_value = A2C_model(state)
 
                 critic_value_history.append(critic_value[0, 0])
 
@@ -164,12 +148,12 @@ while True:  # Run until solved
 
             # Calculate expected value from rewards
             # - At each timestep what was the total reward received after that timestep
-            # - Rewards in the past are discounted by multiplying them with gamma
+            # - Rewards in the past are discounted by multiplying them with discount_factor
             # - These are the labels for our critic
             returns = []
             discounted_sum = 0
             for r in rewards_history[::-1]:
-                discounted_sum = r + gamma * discounted_sum
+                discounted_sum = r + discount_factor * discounted_sum
                 returns.insert(0, discounted_sum)
 
             # Normalize
@@ -199,34 +183,19 @@ while True:  # Run until solved
                 )
 
             # ----------------------------------------------- #
-            if combined_loss:
-                # LOSS FOR BOTH COMBINED
-                # Backpropagation
-                loss_value = sum(actor_losses) + sum(critic_losses)
+            # LOSS FOR BOTH COMBINED
+            # Backpropagation
+            loss_value = sum(actor_losses) + sum(critic_losses)
 
-                actor_grads = tape.gradient(loss_value, actor_model.trainable_variables)
-                optimizer.apply_gradients(zip(actor_grads, actor_model.trainable_variables))
-
-                critic_grads = tape.gradient(loss_value, critic_model.trainable_variables)
-                optimizer.apply_gradients(zip(critic_grads, critic_model.trainable_variables))
-            
-            
-
-            if not combined_loss:
-                # LOSS FOR EACH OF THEM NOT CONBINED, BETTER?
-                # Backpropagation
-                actor_grads = tape.gradient(sum(actor_losses), actor_model.trainable_variables)
-                optimizer.apply_gradients(zip(actor_grads, actor_model.trainable_variables))
-
-                critic_grads = tape.gradient(sum(critic_losses), critic_model.trainable_variables)
-                optimizer.apply_gradients(zip(critic_grads, critic_model.trainable_variables))
+            grads = tape.gradient(loss_value, A2C_model.trainable_variables)
+            optimizer.apply_gradients(zip(grads, A2C_model.trainable_variables))
 
             # Clear the loss and reward history
             action_probs_history.clear()
             critic_value_history.clear()
             rewards_history.clear()
     
-    if episode_count % 10 == 0:
+    if episode_count % 1 == 0:
         # Log every episode 
         logger.logkv("behaviour_running_reward", behaviour_running_reward)
         logger.logkv("replay_running_reward", running_reward)
@@ -237,23 +206,20 @@ while True:  # Run until solved
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 100 == 0):
+    if(episode_count % 1 == 0):
+        model_path = 'models/A2C-episode-{}/'.format(episode_count)
+        # Path converting if working on windows
+        # model_path = Path("source_data/text_files/") <--- Creates path that works on both windows and unix
+        # model_path = str(Path(model_path))
         print("Saved model at episode {}".format(episode_count))
-        actor_model_path = 'models\\actor-episode-{}'.format(episode_count)
-        critic_model_path = 'models\\critic-episode-{}'.format(episode_count)
         # Save tensorflow model
-        actor_model.save(actor_model_path)
-        critic_model.save(critic_model_path)
+        A2C_model.save(model_path)
 
         # Save the parameters
         data = { "running_reward": running_reward, "episode" : episode_count}
         data = json.dumps(data)    
         param_file = json.loads(data)
 
-        actor_file ='{}\data.json'.format(actor_model_path)
+        actor_file ='{}\data.json'.format(model_path)
         with open(actor_file,'w+') as file:
-            json.dump(param_file, file, indent = 4)
-        
-        critic_file ='{}\data.json'.format(critic_model_path)
-        with open(critic_file,'w+') as file:
             json.dump(param_file, file, indent = 4)
