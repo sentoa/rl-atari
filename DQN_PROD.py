@@ -70,7 +70,7 @@ model_target = create_q_model(env.action_space.n)
 optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
 
 # Number of episodes
-episodes = 20
+episodes = 300000
 
 # Experience replay buffers
 action_history = []
@@ -89,7 +89,7 @@ epsilon_frame_cap = 1000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
-max_memory_length = 100
+max_memory_length = 50000
 
 # Train the model after 4 actions
 update_after_actions = 4
