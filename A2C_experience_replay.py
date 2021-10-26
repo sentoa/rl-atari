@@ -98,7 +98,6 @@ while True:  # Run until solved
         state = tf.convert_to_tensor(state)
         state = tf.expand_dims(state, 0)
         action_probs = actor_model(state, training=False)
-        #print(np.squeeze(action_probs))
         action = np.random.choice(num_actions, p=np.squeeze(action_probs))
         state, reward, done, _ = env.step(action)
         
@@ -129,7 +128,6 @@ while True:  # Run until solved
         indice = np.random.choice(range(replay_length), size=1)[0]
         # episodes_history[indice][0] indices: episode history, states, number of states for that episode
         replay_episode_length = len(episodes_history[indice][0])
-        #print(replay_episode_length)
         with tf.GradientTape(persistent=True) as tape:
             episode_reward = 0
             for experience_time_step in range(replay_episode_length):
@@ -144,7 +142,6 @@ while True:  # Run until solved
 
                 state = tf.convert_to_tensor(state)
                 state = tf.expand_dims(state, 0)
-                #print(state.shape)
                 
                 action_probs = actor_model(state, training=False)
                 critic_value = critic_model(state, training=False)
@@ -160,7 +157,7 @@ while True:  # Run until solved
                 # Apply the sampled action in our environment
                 rewards_history.append(reward_exp)
                 episode_reward += reward_exp
-            #print(episode_reward)
+
             # Update running reward to check condition for solving
             # 5% weight from newest episode + 95% of reward from older episodes, when "average" running reward is high enough, stop 
             running_reward = 0.05 * episode_reward + (1 - 0.05) * running_reward 
