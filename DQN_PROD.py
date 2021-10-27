@@ -96,7 +96,7 @@ max_memory_length = 1000000
 update_after_actions = 4
 
 # How often to update the target network
-update_target_network = 1000
+update_target_network = 10000
 
 # Epsilon Greedy Factor - Lower number means more random actions will be taken
 epsilon_factor = 10000000
