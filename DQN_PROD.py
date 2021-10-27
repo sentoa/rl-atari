@@ -16,6 +16,7 @@ import argparse
 
 
 tf.autograph.set_verbosity(0)
+tf.enable_eager_execution()
 
 # Configuration paramaters for the whole setup
 seed = 42
