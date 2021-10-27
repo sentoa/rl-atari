@@ -90,7 +90,7 @@ epsilon_frame_cap = 1000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
-max_memory_length = 50000
+max_memory_length = 100000
 
 # Train the model after 4 actions
 update_after_actions = 4
@@ -237,9 +237,9 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 10 == 0):
+    if(episode_count % 50 == 0):
         print("Saved model at episode {}".format(episode_count))
-        model_path = 'models/model'
+        model_path = 'models/episode-{}'.format(episode_count)
 
         # Save tensorflow model
         model.save(model_path)
@@ -247,9 +247,10 @@ for episode in range(episodes):
         # Save the parameters
         data = { "running_reward": running_reward, "episode" : episode_count,
                  "frame_count" : frame_count}
-        data = json.dumps(data)    
+        data = json.dumps(data)
         param_file = json.loads(data)
-        filename='{}/data.json'.format('models')
+        filename='{}/data.json'.format(model_path)
         with open(filename,'w+') as file:
             json.dump(param_file, file, indent = 4)
+
 
