@@ -237,7 +237,7 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 100 == 0 && episode_count > 3000):
+    if(episode_count % 100 == 0 and episode_count > 3000):
         print("Saved model at episode {}".format(episode_count))
         model_path = 'models/episode-{}'.format(episode_count)
 
