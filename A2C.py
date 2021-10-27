@@ -146,17 +146,16 @@ while True:  # Run until solved
         critic_value_history.clear()
         rewards_history.clear()
 
-    if episode_count % 100 == 0:
-        # Log every episode 
-        logger.logkv("reward", running_reward)
-        logger.logkv("episode", episode_count)
-        logger.dumpkvs()
+    # Log every episode 
+    logger.logkv("reward", running_reward)
+    logger.logkv("episode", episode_count)
+    logger.dumpkvs()
 
     # Put it here to avoid saving on 0th episode lol
     episode_count += 1
 
     # Save Model every 100th episode and if over 3k episodes
-    if(episode_count % 100 == 0 and episode_count > 3000):
+    if(episode_count % 100 == 0 and episode_count > 2000):
         model_path = 'models/A2C-episode-{}'.format(episode_count)
         print("Saved model at episode {}".format(episode_count))
         # Save tensorflow model
