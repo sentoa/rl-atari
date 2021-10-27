@@ -249,7 +249,7 @@ for episode in range(episodes):
                  "frame_count" : frame_count}
         data = json.dumps(data)
         param_file = json.loads(data)
-        filename='{}/data.json'.format(model_path)
+        filename='{}.json'.format(model_path)
         with open(filename,'w+') as file:
             json.dump(param_file, file, indent = 4)
 
