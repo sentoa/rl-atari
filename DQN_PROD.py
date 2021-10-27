@@ -90,7 +90,7 @@ epsilon_frame_cap = 1000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
-max_memory_length = 100000
+max_memory_length = 30000
 
 # Train the model after 4 actions
 update_after_actions = 4
@@ -237,7 +237,7 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 100 == 0 and episode_count > 3000):
+    if(episode_count % 100 == 0 and episode_count > 2000):
         print("Saved model at episode {}".format(episode_count))
         model_path = 'models/episode-{}'.format(episode_count)
 
