@@ -156,7 +156,7 @@ while True:  # Run until solved
     episode_count += 1
 
     # Save Model every 100th episode and if over 3k episodes
-     if(episode_count % 100 == 0 and episode_count > 3000):
+    if(episode_count % 100 == 0 and episode_count > 3000):
         model_path = 'models/A2C-episode-{}'.format(episode_count)
         print("Saved model at episode {}".format(episode_count))
         # Save tensorflow model
