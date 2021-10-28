@@ -17,7 +17,7 @@ combined_loss = False
 
 # Configuration parameters for the whole setup
 gamma = 0.99  # Discount factor for past rewards
-max_steps_per_episode = 10000
+max_steps_per_episode = 64
 
 DEBUG = 10
 
