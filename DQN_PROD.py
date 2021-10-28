@@ -16,7 +16,7 @@ import argparse
 
 
 tf.autograph.set_verbosity(0)
-tf.enable_eager_execution()
+#tf.enable_eager_execution()
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -68,7 +68,7 @@ model_target = create_q_model(env.action_space.n)
 
 # In the Deepmind paper they use RMSProp however then Adam optimizer
 # improves training time
-optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
+optimizer = keras.optimizers.RMSprop(learning_rate=0.00025, clipnorm=1.0)
 
 # Number of episodes
 episodes = 30000000
@@ -86,11 +86,11 @@ frame_count = 0
 
 # Number of frames to take random action and observe output
 
-epsilon_frame_cap = 1000
+epsilon_frame_cap = 50000
 
 # Maximum replay length
 # Note: The Deepmind paper suggests 1000000 however this causes memory issues
-max_memory_length = 30000
+max_memory_length = 100000
 
 # Train the model after 4 actions
 update_after_actions = 4
@@ -135,7 +135,7 @@ for episode in range(episodes):
             action = tf.argmax(action_probs[0]).numpy()
 
         # Decay probability of taking random action
-        epsilon -= epsilon / epsilon_factor
+        epsilon -= 0.9 / epsilon_factor
         # If enough timesteps have been reached, we do not want epsilon
         # to reach 0, so we ensure there is a minimum threshold
         epsilon = max(epsilon, epsilon_min)
@@ -237,9 +237,9 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 1000 == 0):
+    if(episode_count % 100 == 0):
         print("Saved model at episode {}".format(episode_count))
-        model_path = 'models/episode-{}'.format(episode_count)
+        model_path = 'models\\episode-{}'.format(episode_count)
 
         # Save tensorflow model
         model.save(model_path)
@@ -252,5 +252,4 @@ for episode in range(episodes):
         filename='{}.json'.format(model_path)
         with open(filename,'w+') as file:
             json.dump(param_file, file, indent = 4)
-
 
