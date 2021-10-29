@@ -21,16 +21,23 @@ tf.autograph.set_verbosity(0)
 # Configuration paramaters for the whole setup
 seed = 42
 gamma = 0.99  # Discount factor for past rewards
-epsilon = 0.9  # Epsilon greedy parameter
+epsilon = 1  # Epsilon greedy parameter
 epsilon_min = 0.1  # Minimum epsilon greedy parameter
 batch_size = 32  # Size of batch taken from replay buffer
 max_steps_per_episode = 10000
+
+epsilon_max = 1
+
+epsilon_interval = (
+    epsilon_max - epsilon_min
+)  # Rate at which to reduce chance of random action being taken
 
 DEBUG = 10
 
 """# Q Model"""
 
 def create_q_model(num_actions):
+    print(num_actions)
     # Network defined by the Deepmind paper
     inputs = layers.Input(shape=(84, 84, 4,))
 
@@ -99,7 +106,7 @@ update_after_actions = 4
 update_target_network = 10000
 
 # Epsilon Greedy Factor - Lower number means more random actions will be taken
-epsilon_factor = 10000000
+epsilon_factor = 1000000.0
 
 # Using huber loss for stability
 loss_function = keras.losses.Huber()
@@ -135,7 +142,7 @@ for episode in range(episodes):
             action = tf.argmax(action_probs[0]).numpy()
 
         # Decay probability of taking random action
-        epsilon -= 0.9 / epsilon_factor
+        epsilon -= epsilon_interval / epsilon_factor
         # If enough timesteps have been reached, we do not want epsilon
         # to reach 0, so we ensure there is a minimum threshold
         epsilon = max(epsilon, epsilon_min)
@@ -155,6 +162,7 @@ for episode in range(episodes):
         state = state_next
 
         replay_length = len(action_history)
+        
 
         # Update every fourth frame and we need to fill out the dataset with
         # enough data. For this, we just sample batch
@@ -239,7 +247,7 @@ for episode in range(episodes):
     # Save Model every 100th episode
     if(episode_count % 100 == 0):
         print("Saved model at episode {}".format(episode_count))
-        model_path = 'models\\episode-{}'.format(episode_count)
+        model_path = 'models/episode-{}'.format(episode_count)
 
         # Save tensorflow model
         model.save(model_path)
