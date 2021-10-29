@@ -106,7 +106,8 @@ update_after_actions = 4
 update_target_network = 10000
 
 # Epsilon Greedy Factor - Lower number means more random actions will be taken
-epsilon_factor = 1000000.0
+#epsilon_factor = 1000000.0
+epsilon_factor = 20000.0
 
 # Using huber loss for stability
 loss_function = keras.losses.Huber()
@@ -218,6 +219,9 @@ for episode in range(episodes):
         if frame_count % update_target_network == 0:
             # update the the target network with new weights
             model_target.set_weights(model.get_weights())
+            # Log details
+            template = "running reward: {:.2f} at episode {}, frame count {}"
+            print(template.format(running_reward, episode_count, frame_count))  
 
         # Limit the state and reward history
         if len(rewards_history) > max_memory_length:
@@ -245,7 +249,7 @@ for episode in range(episodes):
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 100 == 0):
+    if(episode_count % 400 == 0):
         print("Saved model at episode {}".format(episode_count))
         model_path = 'models/episode-{}'.format(episode_count)
 
