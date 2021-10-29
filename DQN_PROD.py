@@ -75,7 +75,7 @@ model_target = create_q_model(env.action_space.n)
 
 # In the Deepmind paper they use RMSProp however then Adam optimizer
 # improves training time
-optimizer = keras.optimizers.RMSprop(learning_rate=0.00025, clipnorm=1.0)
+optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
 
 # Number of episodes
 episodes = 30000000
