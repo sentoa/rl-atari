@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Configuration parameters for the whole setup
 discount_factor = 0.99  
-max_steps_per_episode = 1000
+max_steps_per_episode = 20
 
 DEBUG = 10
 
@@ -68,7 +68,7 @@ exp_reward_history = []
 done_history = []
 
 episodes_history = []
-episodes_history_max_length = 100
+episodes_history_max_length = 1000
 
 min_episodes_memory = 1
 
@@ -77,7 +77,7 @@ while True:  # Run until solved
     behaviour_episode_reward = 0
     # Behaviour policy and storing of experiences to experience replay
     for timestep in range(1, max_steps_per_episode):
-        env.render()
+        #env.render()
         # Behaviour Policy, follow current policy
         state = tf.convert_to_tensor(state)
         state = tf.expand_dims(state, 0)
@@ -206,7 +206,7 @@ while True:  # Run until solved
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 1 == 0):
+    if(episode_count % 100 == 0):
         model_path = 'models/A2C-episode-{}/'.format(episode_count)
         # Path converting if working on windows
         # model_path = Path("source_data/text_files/") <--- Creates path that works on both windows and unix
