@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Configuration parameters for the whole setup
 discount_factor = 0.99  
-max_steps_per_episode = 20
+max_steps_per_episode = 60
 
 DEBUG = 10
 
