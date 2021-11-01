@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Configuration parameters for the whole setup
 discount_factor = 0.99  
-max_steps_per_episode = 1000
+max_steps_per_episode = 100
 
 DEBUG = 10
 
@@ -57,7 +57,7 @@ episode_count = 0
 
 # Setup logging for the model
 logger.set_level(DEBUG)
-dir = "logs"
+dir = "logs\\A2CER"
 if os.path.exists(dir):
     shutil.rmtree(dir)
 logger.configure(dir=dir)
@@ -68,10 +68,10 @@ exp_reward_history = []
 done_history = []
 
 episodes_history = []
-episodes_history_max_length = 100
+episodes_history_max_length = 1500
 
-min_episodes_memory = 1
-
+min_episodes_memory = 1000
+#min_episodes_memory = 10
 while True:  # Run until solved
     state = np.array(env.reset())
     behaviour_episode_reward = 0
@@ -85,13 +85,12 @@ while True:  # Run until solved
 
         action = np.random.choice(num_actions, p=np.squeeze(action_probs))
         state, reward, done, _ = env.step(action)
-        
         # Save experience to experience replay buffer
         state_history.append(state)
         exp_reward_history.append(reward)
         done_history.append(done)
         behaviour_episode_reward += reward
-        if(timestep == 1000):
+        if(done):
             break
     
     behaviour_running_reward = 0.05 * behaviour_episode_reward + (1 - 0.05) * behaviour_running_reward 
@@ -206,7 +205,7 @@ while True:  # Run until solved
     episode_count += 1
 
     # Save Model every 100th episode
-    if(episode_count % 1 == 0):
+    if(episode_count % 100 == 0):
         model_path = 'models/A2C-episode-{}/'.format(episode_count)
         # Path converting if working on windows
         # model_path = Path("source_data/text_files/") <--- Creates path that works on both windows and unix
