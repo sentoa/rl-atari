@@ -12,6 +12,9 @@ from tensorflow.keras import layers
 from atari_wrappers import make_atari, wrap_deepmind
 from pathlib import Path
 
+tf.autograph.set_verbosity(0)
+tf.enable_eager_execution()
+
 # Configuration parameters for the whole setup
 discount_factor = 0.99  
 max_steps_per_episode = 100
