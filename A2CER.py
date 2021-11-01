@@ -57,7 +57,7 @@ episode_count = 0
 
 # Setup logging for the model
 logger.set_level(DEBUG)
-dir = "logs\\A2CER"
+dir = "logs"
 if os.path.exists(dir):
     shutil.rmtree(dir)
 logger.configure(dir=dir)
@@ -77,7 +77,7 @@ while True:  # Run until solved
     behaviour_episode_reward = 0
     # Behaviour policy and storing of experiences to experience replay
     for timestep in range(1, max_steps_per_episode):
-        env.render()
+        #env.render()
         # Behaviour Policy, follow current policy
         state = tf.convert_to_tensor(state)
         state = tf.expand_dims(state, 0)
