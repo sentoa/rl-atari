@@ -209,7 +209,7 @@ while True:  # Run until solved
 
     # Save Model every 100th episode
     if(episode_count % 100 == 0):
-        model_path = 'models/A2C-episode-{}/'.format(episode_count)
+        model_path = 'models/A2C-episode-{}'.format(episode_count)
         # Path converting if working on windows
         # model_path = Path("source_data/text_files/") <--- Creates path that works on both windows and unix
         # model_path = str(Path(model_path))
@@ -222,6 +222,6 @@ while True:  # Run until solved
         data = json.dumps(data)    
         param_file = json.loads(data)
 
-        actor_file ='{}\data.json'.format(model_path)
+        actor_file ='{}/data.json'.format(model_path)
         with open(actor_file,'w+') as file:
             json.dump(param_file, file, indent = 4)
