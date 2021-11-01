@@ -11,7 +11,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from atari_wrappers import make_atari, wrap_deepmind
 
-tf.enable_eager_execution()
+#tf.enable_eager_execution()
 
 combined_loss = False
 
@@ -21,7 +21,7 @@ max_steps_per_episode = 10000
 
 DEBUG = 10
 
-env = make_atari("BreakoutNoFrameskip-v4")
+env = make_atari("PongNoFrameskip-v4")
 eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
 # preprocesses sequence, warp the frames, grey scale, stake four frame and scale to smaller ratio
 env = wrap_deepmind(env, frame_stack=True, scale=True)
