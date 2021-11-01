@@ -221,7 +221,3 @@ while True:  # Run until solved
         data = { "running_reward": running_reward, "episode" : episode_count}
         data = json.dumps(data)    
         param_file = json.loads(data)
-
-        actor_file ='{}/data.json'.format(model_path)
-        with open(actor_file,'w+') as file:
-            json.dump(param_file, file, indent = 4)
